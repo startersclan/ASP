@@ -252,7 +252,9 @@ function getBonusUnlockCountByBadges($pid, $rank, $connection)
     // Count number of kit badges obtained
     $checkawds = implode(",", $kitbadges);
     $query = <<<SQL
-SELECT COUNT(`award_id`) AS `count` 
+-- Using DISTINCT here to ensure we never return more than 7 unlock points based on badges
+-- Without DISTINCT, we'd return up to 14 points ($level = 2 and player has all level 2 + 3 badges)
+SELECT COUNT(DISTINCT `award_id`) AS `count` 
 FROM `player_award` 
 WHERE `player_id` = $pid 
   AND (
