@@ -60,12 +60,20 @@ else
 
     // We will not use a view this time, performance is key
     $query = <<<SQL
+-- COUNT all rows for each medal to get a single row per medal
 SELECT a.award_id AS `id`, a.player_id AS `pid`, MAX(r.time_end) AS `earned`, MIN(r.time_end) AS `first`, COUNT(`level`) AS `level`
 FROM player_award AS a
   LEFT JOIN round AS r ON a.round_id = r.id
-WHERE a.player_id=$pid
+WHERE a.player_id=$pid AND a.award_id BETWEEN 2000000 AND 2999999
 GROUP BY a.player_id, a.award_id
-ORDER BY a.player_id;
+UNION ALL
+-- Don't GROUP badge/ribbon rows since we need to return all levels invidially (for ribbons)
+-- (selecting 0 as first since neither ribbons nor badges can be awarded more than once)
+SELECT a.award_id AS `id`, a.player_id AS `pid`, r.time_end AS `earned`, 0 AS `first`, `level`
+FROM player_award AS a
+  LEFT JOIN round AS r ON a.round_id = r.id
+WHERE a.player_id=$pid AND a.award_id NOT BETWEEN 2000000 AND 2999999
+ORDER BY `id`, `level`;
 SQL;
 
 
@@ -73,10 +81,7 @@ SQL;
     $stmt = $connection->query($query);
     while ($award = $stmt->fetch())
     {
-        // Ribbons will get a 'first' value of 0
-        $id = (int)$award['id'];
-        $first = (($id > 2000000) && ($id < 3000000)) ? $award['first'] : 0;
-        $Response->writeDataLine($id, $award['level'], $award['earned'], $first);
+        $Response->writeDataLine($award['id'], $award['level'], $award['earned'], $award['first']);
     }
 
     $Response->send();
