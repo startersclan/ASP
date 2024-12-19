@@ -23,6 +23,13 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
 
+    # Redirect sendsnapshot ASPX file call to the regular snapshot endpoint (bf2statistics.php)
+    RewriteRule ^.*/sendsnapshot\.aspx$ bf2statistics.php [L,NC]
+
+    # Don't redirect direct links to non-existent files or directories to the index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
     # Redirect all ASPX file calls to the index.php?aspx=ASPX_FILENAME
     RewriteRule ^(.*)\.aspx$ index.php?aspx=$1 [QSA,L]
 
